@@ -307,14 +307,24 @@ End Sub
 ' BLOCO 3: CRUD POWER QUERY (O "Banco de Dados" Embutido e Privado)
 ' =====================================================================
 Private Sub SalvarVariavelPQ_Interno(nomeConsulta As String, nomeVariavel As String, valor As String)
-    Dim valorAtual As String, valorFormatado As String
+    Dim formulaM As String, regex As Object, valorFormatado As String
+    
     PrepararConsultaRepositorio nomeConsulta
-    valorAtual = LerVariavelPQ_Interno(nomeConsulta, nomeVariavel)
-    valorFormatado = """" & valor & """"
-    If valorAtual = "" Then
-        AdicionarVariavelPQ_Interno nomeConsulta, nomeVariavel, valorFormatado
-    Else
+    formulaM = ActiveWorkbook.Queries(nomeConsulta).Formula
+    valorFormatado = """" & valor & """" 
+    
+    ' ALTERAÇÃO: Em vez de verificar se o "valor" é vazio,
+    ' usamos o Regex para verificar se a declaração da variável já existe no código.
+    Set regex = CreateObject("VBScript.RegExp")
+    regex.IgnoreCase = True
+    regex.Pattern = "\b" & nomeVariavel & "\s*=" ' Procura por: nomeVariavel =
+    
+    If regex.Test(formulaM) Then
+        ' Se o nome foi encontrado, significa que a variável existe (mesmo se o valor for ""). Então ALTERA.
         AlterarVariavelPQ_Interno nomeConsulta, nomeVariavel, valorFormatado
+    Else
+        ' Se não encontrou o nome, ADICIONA.
+        AdicionarVariavelPQ_Interno nomeConsulta, nomeVariavel, valorFormatado
     End If
 End Sub
 
