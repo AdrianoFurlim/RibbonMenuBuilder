@@ -1,11 +1,24 @@
 Option Explicit
 
 ' =====================================================================
+' ENUMERAÇÕES
+' =====================================================================
+' ADICIONADO: Enumeração para o controle de tempo do arquivo (antigoEm)
+Public Enum eValidade
+    vLivre = 0
+    v10Min = 1
+    v30Min = 2
+    v1Hora = 3
+    v12Horas = 4
+    v1Dia = 5
+    v1Semana = 6
+End Enum
+
+' =====================================================================
 ' CONFIGURAÇÃO INTERNA DA CLASSE
 ' =====================================================================
-Private Const NOME_CONSULTA_PQ As String = "Variaveis" ' Nome da consulta do Power Query
+Private Const NOME_CONSULTA_PQ As String = "Variaveis"
 
-' Variáveis de Estado (Ícones e Estruturas)
 Private m_IconeOk As String
 Private m_IconeAtencao As String
 Private m_IconeErro As String
@@ -13,25 +26,27 @@ Private m_IconeCinza As String
 
 Private m_SecoesOrdem As Collection
 Private m_SecoesXML As Object
-Private m_ConfigXML As String
 Private m_idNum As Integer
+
+' ADICIONADO: Propriedade para controlar o tamanho do menu principal
+Public TamanhoMenuPrincipal As String
 
 ' =====================================================================
 ' INICIALIZAÇÃO
 ' =====================================================================
 Private Sub Class_Initialize()
-    m_IconeOk = "NotebookColor12"       ' Verde
-    m_IconeAtencao = "NotebookColor2"   ' Laranja/Amarelo
-    m_IconeErro = "NotebookColor7"      ' Vermelho
-    m_IconeCinza = "NotebookColor16"    ' Cinza
+    m_IconeOk = "NotebookColor12"
+    m_IconeAtencao = "NotebookColor2"
+    m_IconeErro = "NotebookColor7"
+    m_IconeCinza = "NotebookColor16"
+    
+    TamanhoMenuPrincipal = "large" ' Tamanho padrão inicial
     
     Set m_SecoesOrdem = New Collection
     Set m_SecoesXML = CreateObject("Scripting.Dictionary")
     m_idNum = 1
-    m_ConfigXML = ""
 End Sub
 
-' Propriedades para customização de ícones
 Public Property Let IconeOk(valor As String): m_IconeOk = valor: End Property
 Public Property Let IconeAtencao(valor As String): m_IconeAtencao = valor: End Property
 Public Property Let IconeErro(valor As String): m_IconeErro = valor: End Property
@@ -40,15 +55,6 @@ Public Property Let IconeCinza(valor As String): m_IconeCinza = valor: End Prope
 ' =====================================================================
 ' BLOCO 1: GERADORES DE XML (O Desenho do Menu)
 ' =====================================================================
-Public Sub AdicionarMenuConfiguracao(DirAtual As String, NomeVariavelPQ As String)
-    Dim xml As String
-    xml = "<button id=""hdrConfig"" label=""CONFIGURAÇÃO"" enabled=""false""/>"
-    xml = xml & "<menu id=""m_dirPadrao"" label=""Diretório Padrão"" image=""img_IrArquivo"" itemSize=""normal"">"
-    xml = xml & "    <button id=""btnSelDirPadrao"" label=""Selecionar Diretório Padrão..."" image=""img_Buscar"" onAction=""OnAct_SelecionarPasta"" tag=""" & NomeVariavelPQ & "|" & DirAtual & """/>"
-    xml = xml & "    <button id=""btnGoDirPadrao"" label=""Ir para Diretório Padrão"" image=""img_IrArquivo"" onAction=""OnAct_AbrirPasta"" tag=""" & DirAtual & """/>"
-    xml = xml & "</menu>"
-    m_ConfigXML = xml
-End Sub
 
 Public Sub CriarSecao(ID As String, Titulo As String, Optional IncluirSeparador As Boolean = True)
     Dim xmlCabecalho As String
@@ -59,7 +65,22 @@ Public Sub CriarSecao(ID As String, Titulo As String, Optional IncluirSeparador 
     m_SecoesXML.Add ID, xmlCabecalho
 End Sub
 
-Public Sub AdicionarArquivoModular(SecaoID As String, Nome As String, Prefixo As String, Extensao As String, DiretorioAlvo As String, Obrigatorio As Boolean, TagPQ As String, UsaPadrao As Boolean)
+' ADICIONADO: Método flexível para criar N diretórios padrões dentro de qualquer seção
+Public Sub AdicionarDiretorioPadrao(SecaoID As String, Titulo As String, VarPQ As String, DirAtual As String, Optional TamanhoSubmenu As String = "normal")
+    Dim xml As String
+    If Not m_SecoesXML.exists(SecaoID) Then Exit Sub
+    
+    xml = "<menu id=""m_dir_" & m_idNum & """ label=""" & Titulo & """ imageMso=""FolderSync"" itemSize=""" & TamanhoSubmenu & """>"
+    xml = xml & "    <button id=""btnSelDir_" & m_idNum & """ label=""Selecionar Pasta Padrão..."" imageMso=""img_Buscar"" onAction=""OnAct_SelecionarPasta"" tag=""" & VarPQ & "|" & DirAtual & """/>"
+    xml = xml & "    <button id=""btnGoDir_" & m_idNum & """ label=""Ir para Pasta Padrão"" imageMso=""img_IrArquivo"" onAction=""OnAct_AbrirPasta"" tag=""" & DirAtual & """/>"
+    xml = xml & "</menu>"
+    
+    m_SecoesXML(SecaoID) = m_SecoesXML(SecaoID) & xml
+    m_idNum = m_idNum + 1
+End Sub
+
+' MODIFICADO: Assinatura atualizada (Prefixo -> NomeBusca, removido Obrigatorio, inserido AntigoEm e a lógica de Tags duplas)
+Public Sub AdicionarArquivoModular(SecaoID As String, Nome As String, NomeBusca As String, Extensao As String, DiretorioAlvo As String, TagVarEspecifica As String, TagVarPadrao As String, ValorPadrao As String, Optional AntigoEm As eValidade = vLivre, Optional TamanhoSubmenu As String = "normal")
     Dim arquivoAtual As String, arquivoMaisRecente As String
     Dim dataAtual As Date, dataModificacao As Date
     Dim extReal As String, xml As String, caminho As String
@@ -68,8 +89,11 @@ Public Sub AdicionarArquivoModular(SecaoID As String, Nome As String, Prefixo As
     
     If Not m_SecoesXML.exists(SecaoID) Then Exit Sub
     
-    ' Lógica do Toggle visual
-    If UsaPadrao Then
+    ' LÓGICA DO TOGGLE: Compara o diretório alvo com a string atual do diretório padrão
+    Dim isUsandoPadrao As Boolean
+    isUsandoPadrao = (Trim(DiretorioAlvo) = Trim(ValorPadrao))
+    
+    If isUsandoPadrao Then
         lblUsarPadrao = "Usar Padrão (Ativado)"
         iconePadrao = m_IconeOk
         btnSelecionarHabilitado = "false"
@@ -84,9 +108,8 @@ Public Sub AdicionarArquivoModular(SecaoID As String, Nome As String, Prefixo As
     arquivoMaisRecente = ""
     dataModificacao = 0
     
-    ' Motor de Busca do Windows
     If caminho <> "" And Dir(caminho, vbDirectory) <> "" Then
-        arquivoAtual = Dir(caminho & Prefixo & "*.*")
+        arquivoAtual = Dir(caminho & NomeBusca & "*.*")
         Do While arquivoAtual <> ""
             If Left(arquivoAtual, 2) <> "~$" Then
                 dataAtual = FileDateTime(caminho & arquivoAtual)
@@ -99,34 +122,56 @@ Public Sub AdicionarArquivoModular(SecaoID As String, Nome As String, Prefixo As
         Loop
     End If
     
+    ' A Tag do Toggle envia as DUAS variáveis para o PQ consultar e comparar depois
+    Dim tagToggle As String
+    tagToggle = TagVarEspecifica & "|" & TagVarPadrao
+    
     If arquivoMaisRecente = "" Then
-        lblPai = Nome & IIf(Obrigatorio, " (Faltando)", " (Não Encontrado)")
-        corPai = IIf(Obrigatorio, m_IconeErro, m_IconeCinza)
+        lblPai = Nome & " (Não Encontrado)"
+        corPai = m_IconeErro
         tagGo = caminho
         
-        xml = "<menu id=""m_arq" & m_idNum & """ label=""" & lblPai & """ imageMso=""" & corPai & """ itemSize=""normal"">"
+        xml = "<menu id=""m_arq" & m_idNum & """ label=""" & lblPai & """ imageMso=""" & corPai & """ itemSize=""" & TamanhoSubmenu & """>"
         xml = xml & "    <button id=""hdr_dir" & m_idNum & """ label=""DIRETÓRIO"" enabled=""false""/>"
-        xml = xml & "    <button id=""btn_padrao" & m_idNum & """ label=""" & lblUsarPadrao & """ imageMso=""" & iconePadrao & """ onAction=""OnAct_UsarPadrao"" tag=""" & TagPQ & """/>"
-        xml = xml & "    <button id=""btn_sel" & m_idNum & """ label=""Selecionar Nova Pasta..."" image=""img_Buscar"" enabled=""" & btnSelecionarHabilitado & """ onAction=""OnAct_SelecionarPasta"" tag=""" & TagPQ & "|" & caminho & """/>"
-        xml = xml & "    <button id=""btn_go" & m_idNum & """ label=""Ir para Pasta"" image=""img_IrArquivo"" onAction=""OnAct_AbrirPasta"" tag=""" & tagGo & """/>"
+        xml = xml & "    <button id=""btn_padrao" & m_idNum & """ label=""" & lblUsarPadrao & """ imageMso=""" & iconePadrao & """ onAction=""OnAct_UsarPadrao"" tag=""" & tagToggle & """/>"
+        xml = xml & "    <button id=""btn_sel" & m_idNum & """ label=""Selecionar Nova Pasta..."" imageMso=""img_Buscar"" enabled=""" & btnSelecionarHabilitado & """ onAction=""OnAct_SelecionarPasta"" tag=""" & TagVarEspecifica & "|" & caminho & """/>"
+        xml = xml & "    <button id=""btn_go" & m_idNum & """ label=""Ir para Pasta"" imageMso=""img_IrArquivo"" onAction=""OnAct_AbrirPasta"" tag=""" & tagGo & """/>"
         xml = xml & "</menu>"
     Else
         extReal = LCase(Mid(arquivoMaisRecente, InStrRev(arquivoMaisRecente, ".")))
         lblPai = Nome
         tagGo = caminho & arquivoMaisRecente
         
+        ' LÓGICA DO TEMPO (Enum)
+        Dim isAntigo As Boolean
+        isAntigo = False
+        If AntigoEm <> vLivre Then
+            Dim minsDiff As Long
+            minsDiff = DateDiff("n", dataModificacao, Now)
+            Select Case AntigoEm
+                Case v10Min: isAntigo = (minsDiff > 10)
+                Case v30Min: isAntigo = (minsDiff > 30)
+                Case v1Hora: isAntigo = (minsDiff > 60)
+                Case v12Horas: isAntigo = (minsDiff > 720)
+                Case v1Dia: isAntigo = (minsDiff > 1440)
+                Case v1Semana: isAntigo = (minsDiff > 10080)
+            End Select
+        End If
+        
         Dim corExt As String, textoExt As String, corData As String, textoData As String
         corExt = IIf(extReal = LCase(Extensao), m_IconeOk, m_IconeErro)
         textoExt = "Extensão: " & extReal & IIf(extReal = LCase(Extensao), "", " (Incorreta)")
-        corData = IIf(Int(dataModificacao) = Date, m_IconeOk, m_IconeAtencao)
-        textoData = "Data: " & Format(dataModificacao, "dd/mm/yyyy hh:mm") & IIf(Int(dataModificacao) = Date, "", " (Antigo)")
+        
+        corData = IIf(isAntigo, m_IconeAtencao, m_IconeOk)
+        textoData = "Data: " & Format(dataModificacao, "dd/mm/yyyy hh:mm") & IIf(isAntigo, " (Antigo)", "")
+        
         corPai = IIf(corExt = m_IconeErro Or corData = m_IconeAtencao, m_IconeAtencao, m_IconeOk)
         
-        xml = "<menu id=""m_arq" & m_idNum & """ label=""" & lblPai & """ imageMso=""" & corPai & """ itemSize=""normal"">"
+        xml = "<menu id=""m_arq" & m_idNum & """ label=""" & lblPai & """ imageMso=""" & corPai & """ itemSize=""" & TamanhoSubmenu & """>"
         xml = xml & "    <button id=""hdr_dir" & m_idNum & """ label=""DIRETÓRIO"" enabled=""false""/>"
-        xml = xml & "    <button id=""btn_padrao" & m_idNum & """ label=""" & lblUsarPadrao & """ imageMso=""" & iconePadrao & """ onAction=""OnAct_UsarPadrao"" tag=""" & TagPQ & """/>"
-        xml = xml & "    <button id=""btn_sel" & m_idNum & """ label=""Selecionar Nova Pasta..."" image=""img_Buscar"" enabled=""" & btnSelecionarHabilitado & """ onAction=""OnAct_SelecionarPasta"" tag=""" & TagPQ & "|" & caminho & """/>"
-        xml = xml & "    <button id=""btn_go" & m_idNum & """ label=""Ir para Pasta"" image=""img_IrArquivo"" onAction=""OnAct_AbrirPasta"" tag=""" & tagGo & """/>"
+        xml = xml & "    <button id=""btn_padrao" & m_idNum & """ label=""" & lblUsarPadrao & """ imageMso=""" & iconePadrao & """ onAction=""OnAct_UsarPadrao"" tag=""" & tagToggle & """/>"
+        xml = xml & "    <button id=""btn_sel" & m_idNum & """ label=""Selecionar Nova Pasta..."" imageMso=""img_Buscar"" enabled=""" & btnSelecionarHabilitado & """ onAction=""OnAct_SelecionarPasta"" tag=""" & TagVarEspecifica & "|" & caminho & """/>"
+        xml = xml & "    <button id=""btn_go" & m_idNum & """ label=""Ir para Pasta"" imageMso=""img_IrArquivo"" onAction=""OnAct_AbrirPasta"" tag=""" & tagGo & """/>"
         xml = xml & "    <menuSeparator id=""sep_int" & m_idNum & """/>"
         xml = xml & "    <button id=""hdr_info" & m_idNum & """ label=""INFORMAÇÕES"" enabled=""false""/>"
         xml = xml & "    <button id=""e_arq" & m_idNum & """ label=""" & textoExt & """ imageMso=""" & corExt & """ onAction=""MacroVazia""/>"
@@ -138,22 +183,22 @@ Public Sub AdicionarArquivoModular(SecaoID As String, Nome As String, Prefixo As
     m_idNum = m_idNum + 1
 End Sub
 
-Public Sub AdicionarArquivoDireto(SecaoID As String, Nome As String, CaminhoCompleto As String, Obrigatorio As Boolean, TagPQ As String)
+Public Sub AdicionarArquivoDireto(SecaoID As String, Nome As String, CaminhoCompleto As String, TagPQ As String, Optional TamanhoSubmenu As String = "normal")
     Dim xml As String, corPai As String, lblPai As String
     If Not m_SecoesXML.exists(SecaoID) Then Exit Sub
     
     If Trim(CaminhoCompleto) = "" Or Dir(CaminhoCompleto) = "" Then
-        lblPai = Nome & IIf(Obrigatorio, " (Faltando)", " (Não Encontrado)")
-        corPai = IIf(Obrigatorio, m_IconeErro, m_IconeCinza)
+        lblPai = Nome & " (Não Encontrado)"
+        corPai = m_IconeErro
     Else
         lblPai = Nome
         corPai = m_IconeOk
     End If
     
-    xml = "<menu id=""m_arq_dir" & m_idNum & """ label=""" & lblPai & """ imageMso=""" & corPai & """ itemSize=""normal"">"
+    xml = "<menu id=""m_arq_dir" & m_idNum & """ label=""" & lblPai & """ imageMso=""" & corPai & """ itemSize=""" & TamanhoSubmenu & """>"
     xml = xml & "    <button id=""hdr_dir_sys" & m_idNum & """ label=""DIRETÓRIO"" enabled=""false""/>"
-    xml = xml & "    <button id=""btn_sel_sys" & m_idNum & """ label=""Selecionar Novo Arquivo..."" image=""img_Buscar"" onAction=""OnAct_SelecionarArquivo"" tag=""" & TagPQ & "|" & CaminhoCompleto & """/>"
-    xml = xml & "    <button id=""btn_go_sys" & m_idNum & """ label=""Ir para Arquivo"" image=""img_IrArquivo"" onAction=""OnAct_AbrirPasta"" tag=""" & CaminhoCompleto & """/>"
+    xml = xml & "    <button id=""btn_sel_sys" & m_idNum & """ label=""Selecionar Novo Arquivo..."" imageMso=""img_Buscar"" onAction=""OnAct_SelecionarArquivo"" tag=""" & TagPQ & "|" & CaminhoCompleto & """/>"
+    xml = xml & "    <button id=""btn_go_sys" & m_idNum & """ label=""Ir para Arquivo"" imageMso=""img_IrArquivo"" onAction=""OnAct_AbrirPasta"" tag=""" & CaminhoCompleto & """/>"
     xml = xml & "</menu>"
     
     m_SecoesXML(SecaoID) = m_SecoesXML(SecaoID) & xml
@@ -162,8 +207,7 @@ End Sub
 
 Public Function GerarXML() As String
     Dim xmlFinal As String, chaveSecao As Variant
-    xmlFinal = "<menu xmlns=""http://schemas.microsoft.com/office/2009/07/customui"" itemSize=""large"">"
-    If m_ConfigXML <> "" Then xmlFinal = xmlFinal & m_ConfigXML
+    xmlFinal = "<menu xmlns=""http://schemas.microsoft.com/office/2009/07/customui"" itemSize=""" & TamanhoMenuPrincipal & """>"
     
     For Each chaveSecao In m_SecoesOrdem
         If InStr(1, m_SecoesXML(chaveSecao), "<menu ") > 0 Then xmlFinal = xmlFinal & m_SecoesXML(chaveSecao)
@@ -176,20 +220,25 @@ End Function
 ' BLOCO 2: MOTOR DE AÇÕES (Lógica de Cliques e Windows)
 ' =====================================================================
 Public Sub ExecutarTogglePadrao(Tag As String)
-    Dim caminhoAtualPQ As String
+    Dim partes() As String, varEspecifica As String, varPadrao As String
+    Dim valEspecifico As String, valPadrao As String
     
-    ' Tag contém apenas o nome da variável. Ex: "dirAderencia"
-    caminhoAtualPQ = LerVariavelPQ_Interno(NOME_CONSULTA_PQ, Tag)
+    ' Separa as duas variáveis enviadas na Tag
+    partes = Split(Tag, "|")
+    If UBound(partes) < 1 Then Exit Sub
+    varEspecifica = partes(0)
+    varPadrao = partes(1)
     
-    If caminhoAtualPQ = "" Then
-        ' Estava usando Padrão. O usuário clicou para desativar.
-        ' Obrigamos ele a selecionar uma pasta para substituir o padrão.
+    valEspecifico = LerVariavelPQ_Interno(NOME_CONSULTA_PQ, varEspecifica)
+    valPadrao = LerVariavelPQ_Interno(NOME_CONSULTA_PQ, varPadrao)
+    
+    If valEspecifico = valPadrao Then
+        ' Estão iguais. O usuário clicou para DESATIVAR o padrão.
         MsgBox "Para desativar o diretório padrão, por favor selecione a pasta específica que deseja utilizar.", vbInformation, "Desativar Padrão"
-        ExecutarSelecionarPasta Tag & "|" ' Envia a Tag formatada com pipeline
+        ExecutarSelecionarPasta varEspecifica & "|" & valEspecifico
     Else
-        ' Não estava usando padrão. O usuário clicou para ativar o padrão.
-        ' Apenas limpamos a variável.
-        SalvarVariavelPQ_Interno NOME_CONSULTA_PQ, Tag, ""
+        ' Estão diferentes. O usuário clicou para ATIVAR o padrão.
+        SalvarVariavelPQ_Interno NOME_CONSULTA_PQ, varEspecifica, valPadrao
     End If
 End Sub
 
@@ -206,7 +255,6 @@ Public Sub ExecutarSelecionarPasta(Tag As String)
     With fd
         .Title = "Selecione a pasta para: " & nomeVariavel
         If caminhoInicial <> "" And Dir(caminhoInicial, vbDirectory) <> "" Then .InitialFileName = caminhoInicial
-        
         If .Show = -1 Then
             novaPasta = .SelectedItems(1)
             If Right(novaPasta, 1) <> "\" Then novaPasta = novaPasta & "\"
@@ -231,7 +279,6 @@ Public Sub ExecutarSelecionarArquivo(Tag As String)
             pastaInicial = Left(caminhoInicial, InStrRev(caminhoInicial, "\"))
             If Dir(pastaInicial, vbDirectory) <> "" Then .InitialFileName = pastaInicial
         End If
-        
         If .Show = -1 Then
             novoArquivo = .SelectedItems(1)
             SalvarVariavelPQ_Interno NOME_CONSULTA_PQ, nomeVariavel, novoArquivo
@@ -242,16 +289,14 @@ End Sub
 Public Sub ExecutarAbrirCaminho(Tag As String)
     Dim pastaRaiz As String
     If Tag = "" Then Exit Sub
-    
     On Error Resume Next
     If Dir(Tag, vbDirectory) <> "" Then
         If (GetAttr(Tag) And vbDirectory) = vbDirectory Then
-            Shell "explorer.exe """ & Tag & """", vbNormalFocus ' É pasta
+            Shell "explorer.exe """ & Tag & """", vbNormalFocus
         Else
-            Shell "explorer.exe /select,""" & Tag & """", vbNormalFocus ' É arquivo
+            Shell "explorer.exe /select,""" & Tag & """", vbNormalFocus
         End If
     Else
-        ' Se falhar, tenta abrir a pasta pai
         pastaRaiz = Left(Tag, InStrRev(Tag, "\"))
         If Dir(pastaRaiz, vbDirectory) <> "" Then Shell "explorer.exe """ & pastaRaiz & """", vbNormalFocus
     End If
@@ -263,11 +308,9 @@ End Sub
 ' =====================================================================
 Private Sub SalvarVariavelPQ_Interno(nomeConsulta As String, nomeVariavel As String, valor As String)
     Dim valorAtual As String, valorFormatado As String
-    
     PrepararConsultaRepositorio nomeConsulta
     valorAtual = LerVariavelPQ_Interno(nomeConsulta, nomeVariavel)
-    valorFormatado = """" & valor & """" ' Coloca aspas para o M ler como Texto
-    
+    valorFormatado = """" & valor & """"
     If valorAtual = "" Then
         AdicionarVariavelPQ_Interno nomeConsulta, nomeVariavel, valorFormatado
     Else
@@ -278,16 +321,13 @@ End Sub
 Private Function LerVariavelPQ_Interno(nomeConsulta As String, nomeVariavel As String) As String
     Dim formulaM As String, regex As Object, matches As Object
     LerVariavelPQ_Interno = ""
-    
     On Error Resume Next
     formulaM = ActiveWorkbook.Queries(nomeConsulta).Formula
     On Error GoTo 0
     If formulaM = "" Then Exit Function
-
     Set regex = CreateObject("VBScript.RegExp")
     regex.Pattern = "\b" & nomeVariavel & "\s*=\s*([^,\r\n]+)"
     regex.IgnoreCase = True
-
     Set matches = regex.Execute(formulaM)
     If matches.Count > 0 Then
         LerVariavelPQ_Interno = Trim(matches(0).SubMatches(0))
