@@ -12,7 +12,7 @@
           <!-- O SEU MENU DINÂMICO -->
           <dynamicMenu id="tbVerificarArq" 
                        label="Verificar Arquivos" 
-                       imageMso="FolderSync" 
+                       image="img_checkList"
                        size="large" 
                        getContent="GerarMenuArquivos" 
                        invalidateContentOnDrop="true" 
