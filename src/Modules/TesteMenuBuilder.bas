@@ -3,7 +3,10 @@ Option Explicit
 ' =====================================================================
 ' VARIÁVEIS GLOBAIS DE TESTE
 ' =====================================================================
-Public dirPadrao As String
+' Agora temos diretórios padrões independentes!
+Public dirPadraoOPC As String
+Public dirPadraoOBRIG As String
+
 Public dirAderencia As String
 Public dirQualidade As String
 Public caminhoQuadro As String
@@ -14,39 +17,43 @@ Public caminhoQuadro As String
 Public Sub CriarAmbienteDeTeste()
     Dim wsh As Object, fso As Object
     Dim desktopPath As String, pastaTeste As String
+    Dim pastaOPC As String, pastaOBRIG As String
     
-    ' Pega o caminho da Área de Trabalho do usuário atual
     Set wsh = CreateObject("WScript.Shell")
     desktopPath = wsh.SpecialFolders("Desktop")
+    
+    ' Definindo os caminhos para o teste de múltiplos padrões
     pastaTeste = desktopPath & "\Teste_Ribbon_XML\"
+    pastaOPC = pastaTeste & "Opcionais\"
+    pastaOBRIG = pastaTeste & "Obrigatorios\"
     
     Set fso = CreateObject("Scripting.FileSystemObject")
     
-    ' Cria a pasta raiz se não existir
-    If Not fso.FolderExists(pastaTeste) Then
-        fso.CreateFolder pastaTeste
-    End If
+    ' Cria a estrutura de pastas
+    If Not fso.FolderExists(pastaTeste) Then fso.CreateFolder pastaTeste
+    If Not fso.FolderExists(pastaOPC) Then fso.CreateFolder pastaOPC
+    If Not fso.FolderExists(pastaOBRIG) Then fso.CreateFolder pastaOBRIG
     
-    ' Cria os arquivos "falsos" (são arquivos de texto com extensão de Excel)
-    ' Como a classe só checa o "Dir" e "FileDateTime", isso funciona perfeitamente e é super rápido!
-    CriarArquivoFalso fso, pastaTeste & "Aderência_0108.xlsx"
-    CriarArquivoFalso fso, pastaTeste & "Qualidade_0108.xlsx"
+    ' Cria os arquivos falsos na pasta de Obrigatórios
+    CriarArquivoFalso fso, pastaOBRIG & "Aderência_Atualizada.xlsx"
+    CriarArquivoFalso fso, pastaOBRIG & "Qualidade_Atualizada.xlsx"
     CriarArquivoFalso fso, pastaTeste & "Quadro.xlsb"
     
-    ' Alimenta as variáveis globais simulando a leitura do Power Query
-    dirPadrao = pastaTeste
-    dirAderencia = pastaTeste       ' Igual ao padrão (Botão "Usar Padrão" ficará Verde/Ativado)
-    dirQualidade = pastaTeste
-    caminhoQuadro = pastaTeste & "Quadro.xlsb"
+    ' Simula a leitura das variáveis (Como se viessem do Power Query)
+    dirPadraoOPC = pastaOPC
+    dirPadraoOBRIG = pastaOBRIG
     
+    ' Arquivos apontando para o padrão Obrigatório (O Toggle ficará verde!)
+    dirAderencia = pastaOBRIG
+    dirQualidade = pastaOBRIG
+    caminhoQuadro = pastaTeste & "Quadro.xlsb"
 End Sub
 
-' Função de apoio para criar os arquivos físicos no Windows
 Private Sub CriarArquivoFalso(fso As Object, caminho As String)
     If Not fso.FileExists(caminho) Then
         Dim f As Object
         Set f = fso.CreateTextFile(caminho, True)
-        f.WriteLine "Arquivo de teste gerado pelo VBA para o menu."
+        f.WriteLine "Arquivo de teste gerado pelo VBA."
         f.Close
     End If
 End Sub

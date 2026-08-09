@@ -39,46 +39,69 @@ End Sub
 ' =====================================================================
 Public Function GerarMenuArquivos(control As IRibbonControl, ByRef returnedVal)
     ' 0. Garante que as variáveis e arquivos existem antes de desenhar o menu
-    If dirPadrao = "" Then Call CriarAmbienteDeTeste
+    If dirPadraoOBRIG = "" Then Call CriarAmbienteDeTeste
 
     Dim construtor As New clsRibbonMenuBuilder
     
-    ' 1. Cria o bloco fixo de configurações
-    construtor.AdicionarMenuConfiguracao DirAtual:=dirPadrao, NomeVariavelPQ:="dirPadrão"
+    ' Tamanho base do menu
+    construtor.TamanhoMenuPrincipal = "large"
     
-    ' 2. Cria as caixinhas (Seções) na ordem em que deseja exibir
+    ' 1. Cria as caixinhas (Seções) na ordem em que deseja exibir
     construtor.CriarSecao ID:="OPC", Titulo:="ARQUIVOS OPCIONAIS", IncluirSeparador:=True
     construtor.CriarSecao ID:="OBRIG", Titulo:="ARQUIVOS OBRIGATÓRIOS", IncluirSeparador:=True
     construtor.CriarSecao ID:="SYS", Titulo:="ARQUIVOS DE SISTEMA", IncluirSeparador:=True
     
-    ' 3. Adiciona os arquivos
+    ' 2. Adiciona os Diretórios Padrões dentro das suas respectivas seções
+    construtor.AdicionarDiretorioPadrao _
+        SecaoID:="OPC", _
+        Titulo:="Diretório Padrão (Opcionais)", _
+        VarPQ:="dirPadraoOPC", _
+        DirAtual:=dirPadraoOPC, _
+        TamanhoSubmenu:="normal"
+        
+    construtor.AdicionarDiretorioPadrao _
+        SecaoID:="OBRIG", _
+        Titulo:="Diretório Padrão", _
+        VarPQ:="dirPadraoOBRIG", _
+        DirAtual:=dirPadraoOBRIG, _
+        TamanhoSubmenu:="normal"
+    
+    ' 3. Adiciona os arquivos modulares com os NOVOS parâmetros
     construtor.AdicionarArquivoModular _
         SecaoID:="OBRIG", _
         Nome:="Aderência (DTO)", _
-        Prefixo:="Aderência", _
+        NomeBusca:="Aderência", _
         Extensao:=".xlsx", _
         DiretorioAlvo:=dirAderencia, _
-        Obrigatorio:=True, _
-        TagPQ:="dirAderencia", _
-        UsaPadrao:=(dirAderencia = dirPadrao)
+        TagVarEspecifica:="dirAderencia", _
+        TagVarPadrao:="dirPadraoOBRIG", _
+        ValorPadrao:=dirPadraoOBRIG, _
+        AntigoEm:=v1Dia, _
+        TamanhoSubmenu:="normal"
 
     construtor.AdicionarArquivoModular _
         SecaoID:="OBRIG", _
         Nome:="Qualidade (DTO)", _
-        Prefixo:="Qualidade", _
+        NomeBusca:="Qualidade", _
         Extensao:=".xlsx", _
         DiretorioAlvo:=dirQualidade, _
-        Obrigatorio:=True, _
-        TagPQ:="dirQualidade", _
-        UsaPadrao:=(dirQualidade = dirPadrao)
+        TagVarEspecifica:="dirQualidade", _
+        TagVarPadrao:="dirPadraoOBRIG", _
+        ValorPadrao:=dirPadraoOBRIG, _
+        AntigoEm:=v1Dia, _
+        TamanhoSubmenu:="normal"
 
+    ' 4. Adiciona arquivos de sistema
     construtor.AdicionarArquivoDireto _
         SecaoID:="SYS", _
         Nome:="Quadro CD", _
         CaminhoCompleto:=caminhoQuadro, _
-        Obrigatorio:=True, _
-        TagPQ:="dirQuadro"
+        TagPQ:="dirQuadro", _
+        TamanhoSubmenu:="normal"
         
-    ' 4. Retorna o XML processado para a Ribbon
+    ' 5. Retorna o XML processado para a Ribbon
     returnedVal = construtor.GerarXML()
 End Function
+
+
+
