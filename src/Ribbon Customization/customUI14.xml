@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<customUI xmlns="http://schemas.microsoft.com/office/2009/07/customui">
+<ribbon>
+    <tabs>
+      
+      <!-- ABA DE TESTE -->
+      <tab id="tabTeste" label="Guia de Testes">
+        
+        <!-- GRUPO -->
+        <group id="grpArquivos" label="Gerenciamento">
+          
+          <!-- O SEU MENU DINÂMICO -->
+          <dynamicMenu id="tbVerificarArq" 
+                       label="Verificar Arquivos" 
+                       imageMso="FolderSync" 
+                       size="large" 
+                       getContent="GerarMenuArquivos" 
+                       invalidateContentOnDrop="true" 
+                       screentip="Verificar Arquivos" 
+                       supertip="Abre o menu com a lista de arquivos para verificar pendências."/>
+                       
+        </group>
+      </tab>
+      
+    </tabs>
+  </ribbon>
+</customUI>
