@@ -12,7 +12,7 @@ Tudo é encapsulado em uma única classe mestra (`clsRibbonMenuBuilder`), garant
 
 ## 💡 Recomendação do Criador
 
-Para um gerenciamento mais eficiente da interface (XML) e inclusão simplificada deste framework no seu projeto Excel, sugere-se fortemente o uso do **[Ribdim](https://github.com/AdrianoFurlim/Ribdim)** — uma IDE especializada que facilita drasticamente o desenvolvimento e a customização da Faixa de Opções do Office.
+Para um gerenciamento mais eficiente da interface (XML) e inclusão simplificada deste framework no seu projeto Excel, sugere-se fortemente o uso do **[Ribdim](https://www.ribdim.com/pt)** — uma IDE especializada que facilita drasticamente o desenvolvimento e a customização da Faixa de Opções do Office.
 
 ## ⚙️ Principais Funcionalidades
 
