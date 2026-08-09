@@ -149,8 +149,9 @@ Public Function ConfigurarMenuArquivos() As clsRibbonMenuBuilder
         TagVarEspecifica:="dirAderencia", _
         TagVarPadrao:="dirPadraoOBRIG", _
         ValorPadrao:=dirPadraoOBRIG, _
-        AntigoEm:=v1Hora, _
-        TamanhoSubmenu:="normal"
+        AntigoEm:=v10Min, _
+        TamanhoSubmenu:="normal", _
+        TipoCabecalhoSubmenu:=eBtnSeparador
 
     construtor.AdicionarArquivoModular _
         SecaoID:="OBRIG", _
@@ -188,6 +189,8 @@ Sub TesteValidacao() '(Optional ByRef V As Boolean)
     
     ' ... continua com a sua rotina de AtualizarTudo (cronômetro, RefreshAll, etc) ...
 End Sub
+
+
 
 
 

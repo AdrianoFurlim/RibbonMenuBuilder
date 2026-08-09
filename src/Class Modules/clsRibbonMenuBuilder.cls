@@ -65,7 +65,7 @@ Public Property Let IconeCinza(valor As String): m_IconeCinza = valor: End Prope
 ' BLOCO 1: GERADORES DE XML (O Desenho do Menu)
 ' =====================================================================
 
-Public Sub CriarSecao(ID As String, Titulo As String, Optional TipoCabecalho As eTipoCabecalho = eBtnSeparador)
+Public Sub CriarSecao(ID As String, Titulo As String, Optional TipoCabecalho As eTipoCabecalho = ePdrSeparador)
     Dim xmlCabecalho As String
     
     ' Se a seção já existe, aborta para não duplicar
@@ -101,7 +101,7 @@ Public Sub AdicionarDiretorioPadrao(SecaoID As String, Titulo As String, VarPQ A
 End Sub
 
 ' MODIFICADO: Assinatura atualizada (Prefixo -> NomeBusca, removido Obrigatorio, inserido AntigoEm e a lógica de Tags duplas)
-Public Sub AdicionarArquivoModular(SecaoID As String, Nome As String, NomeBusca As String, Extensao As String, DiretorioAlvo As String, TagVarEspecifica As String, TagVarPadrao As String, ValorPadrao As String, Optional AntigoEm As eValidade = vLivre, Optional TamanhoSubmenu As String = "normal")
+Public Sub AdicionarArquivoModular(SecaoID As String, Nome As String, NomeBusca As String, Extensao As String, DiretorioAlvo As String, TagVarEspecifica As String, TagVarPadrao As String, ValorPadrao As String, Optional AntigoEm As eValidade = vLivre, Optional TamanhoSubmenu As String = "normal", Optional TipoCabecalhoSubmenu As eTipoCabecalho = ePdrSeparador)
     Dim arquivoAtual As String, arquivoMaisRecente As String
     Dim dataAtual As Date, dataModificacao As Date
     Dim extReal As String, xml As String, caminho As String
@@ -151,10 +151,18 @@ Public Sub AdicionarArquivoModular(SecaoID As String, Nome As String, NomeBusca 
         lblPai = Nome & " (Não Encontrado)"
         corPai = m_IconeErro
         tagGo = caminho
+        
         m_MensagemValidacao = m_MensagemValidacao & "> " & Nome & vbCrLf & "     • Não encontrado" & vbCrLf & vbCrLf
         
         xml = "<menu id=""m_arq" & m_idNum & """ label=""" & lblPai & """ imageMso=""" & corPai & """ itemSize=""" & TamanhoSubmenu & """>"
-        xml = xml & "    <button id=""hdr_dir" & m_idNum & """ label=""DIRETÓRIO"" enabled=""false""/>"
+        
+        ' --- CONTROLE DO TÍTULO: DIRETÓRIO ---
+        If TipoCabecalhoSubmenu = ePdrSeparador Then
+            xml = xml & "    <menuSeparator id=""sep_dir" & m_idNum & """ title=""DIRETÓRIO""/>"
+        Else
+            xml = xml & "    <button id=""hdr_dir" & m_idNum & """ label=""DIRETÓRIO"" enabled=""false""/>"
+        End If
+        
         xml = xml & "    <button id=""btn_padrao" & m_idNum & """ label=""" & lblUsarPadrao & """ imageMso=""" & iconePadrao & """ onAction=""OnAct_UsarPadrao"" tag=""" & tagToggle & """/>"
         xml = xml & "    <button id=""btn_sel" & m_idNum & """ label=""Selecionar Nova Pasta..."" image=""img_procurar"" enabled=""" & btnSelecionarHabilitado & """ onAction=""OnAct_SelecionarPasta"" tag=""" & TagVarEspecifica & "|" & caminho & """/>"
         xml = xml & "    <button id=""btn_go" & m_idNum & """ label=""Ir para Pasta"" image=""img_pastaAberta"" onAction=""OnAct_AbrirPasta"" tag=""" & tagGo & """/>"
@@ -164,7 +172,6 @@ Public Sub AdicionarArquivoModular(SecaoID As String, Nome As String, NomeBusca 
         lblPai = Nome
         tagGo = caminho & arquivoMaisRecente
         
-        ' LÓGICA DO TEMPO (Enum)
         Dim isAntigo As Boolean
         isAntigo = False
         If AntigoEm <> vLivre Then
@@ -194,14 +201,28 @@ Public Sub AdicionarArquivoModular(SecaoID As String, Nome As String, NomeBusca 
         ElseIf isAntigo Then
             m_MensagemValidacao = m_MensagemValidacao & "> " & Nome & vbCrLf & "     • Desatualizado: " & Format(dataModificacao, "dd/mm/yyyy hh:mm") & vbCrLf & vbCrLf
         End If
-
+        
         xml = "<menu id=""m_arq" & m_idNum & """ label=""" & lblPai & """ imageMso=""" & corPai & """ itemSize=""" & TamanhoSubmenu & """>"
-        xml = xml & "    <button id=""hdr_dir" & m_idNum & """ label=""DIRETÓRIO"" enabled=""false""/>"
+        
+        ' --- CONTROLE DO TÍTULO: DIRETÓRIO ---
+        If TipoCabecalhoSubmenu = ePdrSeparador Then
+            xml = xml & "    <menuSeparator id=""sep_dir" & m_idNum & """ title=""DIRETÓRIO""/>"
+        Else
+            xml = xml & "    <button id=""hdr_dir" & m_idNum & """ label=""DIRETÓRIO"" enabled=""false""/>"
+        End If
+        
         xml = xml & "    <button id=""btn_padrao" & m_idNum & """ label=""" & lblUsarPadrao & """ imageMso=""" & iconePadrao & """ onAction=""OnAct_UsarPadrao"" tag=""" & tagToggle & """/>"
         xml = xml & "    <button id=""btn_sel" & m_idNum & """ label=""Selecionar Nova Pasta..."" image=""img_procurar"" enabled=""" & btnSelecionarHabilitado & """ onAction=""OnAct_SelecionarPasta"" tag=""" & TagVarEspecifica & "|" & caminho & """/>"
         xml = xml & "    <button id=""btn_go" & m_idNum & """ label=""Ir para Pasta"" image=""img_pastaAberta"" onAction=""OnAct_AbrirPasta"" tag=""" & tagGo & """/>"
-        xml = xml & "    <menuSeparator id=""sep_int" & m_idNum & """/>"
-        xml = xml & "    <button id=""hdr_info" & m_idNum & """ label=""INFORMAÇÕES"" enabled=""false""/>"
+        
+        ' --- CONTROLE DO TÍTULO: INFORMAÇÕES ---
+        If TipoCabecalhoSubmenu = ePdrSeparador Then
+            xml = xml & "    <menuSeparator id=""sep_info" & m_idNum & """ title=""INFORMAÇÕES""/>"
+        Else
+            xml = xml & "    <menuSeparator id=""sep_int" & m_idNum & """/>"
+            xml = xml & "    <button id=""hdr_info" & m_idNum & """ label=""INFORMAÇÕES"" enabled=""false""/>"
+        End If
+        
         xml = xml & "    <button id=""e_arq" & m_idNum & """ label=""" & textoExt & """ imageMso=""" & corExt & """ onAction=""MacroVazia""/>"
         xml = xml & "    <button id=""d_arq" & m_idNum & """ label=""" & textoData & """ imageMso=""" & corData & """ onAction=""MacroVazia""/>"
         xml = xml & "</menu>"
@@ -211,7 +232,7 @@ Public Sub AdicionarArquivoModular(SecaoID As String, Nome As String, NomeBusca 
     m_idNum = m_idNum + 1
 End Sub
 
-Public Sub AdicionarArquivoDireto(SecaoID As String, Nome As String, CaminhoCompleto As String, TagPQ As String, Optional TamanhoSubmenu As String = "normal")
+Public Sub AdicionarArquivoDireto(SecaoID As String, Nome As String, CaminhoCompleto As String, TagPQ As String, Optional TamanhoSubmenu As String = "normal", Optional TipoCabecalhoSubmenu As eTipoCabecalho = ePdrSeparador)
     Dim xml As String, corPai As String, lblPai As String
     If Not m_SecoesXML.exists(SecaoID) Then Exit Sub
     
@@ -225,7 +246,14 @@ Public Sub AdicionarArquivoDireto(SecaoID As String, Nome As String, CaminhoComp
     End If
     
     xml = "<menu id=""m_arq_dir" & m_idNum & """ label=""" & lblPai & """ imageMso=""" & corPai & """ itemSize=""" & TamanhoSubmenu & """>"
-    xml = xml & "    <button id=""hdr_dir_sys" & m_idNum & """ label=""DIRETÓRIO"" enabled=""false""/>"
+    
+    ' --- CONTROLE DO TÍTULO: DIRETÓRIO ---
+    If TipoCabecalhoSubmenu = ePdrSeparador Then
+        xml = xml & "    <menuSeparator id=""sep_dir_sys" & m_idNum & """ title=""DIRETÓRIO""/>"
+    Else
+        xml = xml & "    <button id=""hdr_dir_sys" & m_idNum & """ label=""DIRETÓRIO"" enabled=""false""/>"
+    End If
+    
     xml = xml & "    <button id=""btn_sel_sys" & m_idNum & """ label=""Selecionar Novo Arquivo..."" image=""img_procurar"" onAction=""OnAct_SelecionarArquivo"" tag=""" & TagPQ & "|" & CaminhoCompleto & """/>"
     xml = xml & "    <button id=""btn_go_sys" & m_idNum & """ label=""Ir para Arquivo"" image=""img_pastaAberta"" onAction=""OnAct_AbrirPasta"" tag=""" & CaminhoCompleto & """/>"
     xml = xml & "</menu>"
@@ -427,5 +455,7 @@ Public Function ValidarArquivos() As Boolean
     ' Se tudo estiver OK, ou se o usuário escolheu "SIM"
     ValidarArquivos = True
 End Function
+
+
 
 
