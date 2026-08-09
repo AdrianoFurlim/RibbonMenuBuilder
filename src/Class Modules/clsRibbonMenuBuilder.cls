@@ -33,9 +33,11 @@ Private m_IconeCinza As String
 Private m_SecoesOrdem As Collection
 Private m_SecoesXML As Object
 Private m_idNum As Integer
+Private m_MensagemValidacao As String
 
 ' ADICIONADO: Propriedade para controlar o tamanho do menu principal
 Public TamanhoMenuPrincipal As String
+
 
 ' =====================================================================
 ' INICIALIZAÇÃO
@@ -45,6 +47,7 @@ Private Sub Class_Initialize()
     m_IconeAtencao = "NotebookColor2"
     m_IconeErro = "NotebookColor7"
     m_IconeCinza = "NotebookColor16"
+    m_MensagemValidacao = ""
     
     TamanhoMenuPrincipal = "large" ' Tamanho padrão inicial
     
@@ -148,6 +151,7 @@ Public Sub AdicionarArquivoModular(SecaoID As String, Nome As String, NomeBusca 
         lblPai = Nome & " (Não Encontrado)"
         corPai = m_IconeErro
         tagGo = caminho
+        m_MensagemValidacao = m_MensagemValidacao & "> " & Nome & vbCrLf & "     • Não encontrado" & vbCrLf & vbCrLf
         
         xml = "<menu id=""m_arq" & m_idNum & """ label=""" & lblPai & """ imageMso=""" & corPai & """ itemSize=""" & TamanhoSubmenu & """>"
         xml = xml & "    <button id=""hdr_dir" & m_idNum & """ label=""DIRETÓRIO"" enabled=""false""/>"
@@ -185,6 +189,12 @@ Public Sub AdicionarArquivoModular(SecaoID As String, Nome As String, NomeBusca 
         
         corPai = IIf(corExt = m_IconeErro Or corData = m_IconeAtencao, m_IconeAtencao, m_IconeOk)
         
+        If extReal <> LCase(Extensao) Then
+            m_MensagemValidacao = m_MensagemValidacao & "> " & Nome & vbCrLf & "     • Extensão incorreta (" & extReal & ")" & vbCrLf & vbCrLf
+        ElseIf isAntigo Then
+            m_MensagemValidacao = m_MensagemValidacao & "> " & Nome & vbCrLf & "     • Desatualizado: " & Format(dataModificacao, "dd/mm/yyyy hh:mm") & vbCrLf & vbCrLf
+        End If
+
         xml = "<menu id=""m_arq" & m_idNum & """ label=""" & lblPai & """ imageMso=""" & corPai & """ itemSize=""" & TamanhoSubmenu & """>"
         xml = xml & "    <button id=""hdr_dir" & m_idNum & """ label=""DIRETÓRIO"" enabled=""false""/>"
         xml = xml & "    <button id=""btn_padrao" & m_idNum & """ label=""" & lblUsarPadrao & """ imageMso=""" & iconePadrao & """ onAction=""OnAct_UsarPadrao"" tag=""" & tagToggle & """/>"
@@ -208,6 +218,7 @@ Public Sub AdicionarArquivoDireto(SecaoID As String, Nome As String, CaminhoComp
     If Trim(CaminhoCompleto) = "" Or Dir(CaminhoCompleto) = "" Then
         lblPai = Nome & " (Não Encontrado)"
         corPai = m_IconeErro
+        m_MensagemValidacao = m_MensagemValidacao & "> " & Nome & vbCrLf & "     • Não encontrado ou inacessível" & vbCrLf & vbCrLf
     Else
         lblPai = Nome
         corPai = m_IconeOk
@@ -394,3 +405,27 @@ Private Sub AlterarVariavelPQ_Interno(nomeConsulta As String, nomeVariavel As St
         ActiveWorkbook.Queries(nomeConsulta).Formula = formulaM
     End If
 End Sub
+
+' =====================================================================
+' BLOCO 4: VALIDAÇÃO DE INTEGRIDADE (Trava Flexível)
+' =====================================================================
+Public Function ValidarArquivos() As Boolean
+    ' Se a string não estiver vazia, significa que erros foram acumulados durante a criação
+    If m_MensagemValidacao <> "" Then
+        Dim resp As VbMsgBoxResult
+        resp = MsgBox("Atenção! Foram encontradas pendências nos arquivos:" & vbCrLf & vbCrLf & _
+                      m_MensagemValidacao & _
+                      "Deseja prosseguir com a atualização do Power Query mesmo assim?", _
+                      vbExclamation + vbYesNo + vbDefaultButton2, "Aviso de Validação de Arquivos")
+                      
+        If resp = vbNo Then
+            ValidarArquivos = False
+            Exit Function
+        End If
+    End If
+    
+    ' Se tudo estiver OK, ou se o usuário escolheu "SIM"
+    ValidarArquivos = True
+End Function
+
+
