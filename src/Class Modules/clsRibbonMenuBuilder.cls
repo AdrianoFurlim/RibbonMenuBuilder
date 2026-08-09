@@ -14,6 +14,12 @@ Public Enum eValidade
     v1Semana = 6
 End Enum
 
+' ADICIONADO: Enumeração para o tipo de cabeçalho da seção
+Public Enum eTipoCabecalho
+    eBtnSeparador = 0   ' Linha vazia + Botão Inativo (Padrão)
+    ePdrSeparador = 1   ' Linha com o título embutido no próprio separador
+End Enum
+
 ' =====================================================================
 ' CONFIGURAÇÃO INTERNA DA CLASSE
 ' =====================================================================
@@ -56,11 +62,23 @@ Public Property Let IconeCinza(valor As String): m_IconeCinza = valor: End Prope
 ' BLOCO 1: GERADORES DE XML (O Desenho do Menu)
 ' =====================================================================
 
-Public Sub CriarSecao(ID As String, Titulo As String, Optional IncluirSeparador As Boolean = True)
+Public Sub CriarSecao(ID As String, Titulo As String, Optional TipoCabecalho As eTipoCabecalho = eBtnSeparador)
     Dim xmlCabecalho As String
+    
+    ' Se a seção já existe, aborta para não duplicar
     If m_SecoesXML.exists(ID) Then Exit Sub
-    If IncluirSeparador Then xmlCabecalho = "<menuSeparator id=""sep_" & ID & """/>"
-    xmlCabecalho = xmlCabecalho & "<button id=""hdr_" & ID & """ label=""" & Titulo & """ enabled=""false""/>"
+    
+    ' Lógica de escolha do visual usando o Enum
+    If TipoCabecalho = ePdrSeparador Then
+        ' Usa o separador nativo que já possui o título embutido
+        xmlCabecalho = "<menuSeparator id=""sep_" & ID & """ title=""" & Titulo & """/>"
+    Else
+        ' Fallback/Padrão (eBtnSeparador): Linha vazia seguida de um botão inativo
+        xmlCabecalho = "<menuSeparator id=""sep_" & ID & """/>"
+        xmlCabecalho = xmlCabecalho & "<button id=""hdr_" & ID & """ label=""" & Titulo & """ enabled=""false""/>"
+    End If
+    
+    ' Registra a seção
     m_SecoesOrdem.Add ID
     m_SecoesXML.Add ID, xmlCabecalho
 End Sub
@@ -311,7 +329,7 @@ Private Sub SalvarVariavelPQ_Interno(nomeConsulta As String, nomeVariavel As Str
     
     PrepararConsultaRepositorio nomeConsulta
     formulaM = ActiveWorkbook.Queries(nomeConsulta).Formula
-    valorFormatado = """" & valor & """" 
+    valorFormatado = """" & valor & """"
     
     ' ALTERAÇÃO: Em vez de verificar se o "valor" é vazio,
     ' usamos o Regex para verificar se a declaração da variável já existe no código.

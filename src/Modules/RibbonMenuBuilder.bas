@@ -47,9 +47,9 @@ Public Function GerarMenuArquivos(control As IRibbonControl, ByRef returnedVal)
     construtor.TamanhoMenuPrincipal = "large"
     
     ' 1. Cria as caixinhas (Seções) na ordem em que deseja exibir
-    construtor.CriarSecao ID:="OPC", Titulo:="ARQUIVOS OPCIONAIS", IncluirSeparador:=True
-    construtor.CriarSecao ID:="OBRIG", Titulo:="ARQUIVOS OBRIGATÓRIOS", IncluirSeparador:=True
-    construtor.CriarSecao ID:="SYS", Titulo:="ARQUIVOS DE SISTEMA", IncluirSeparador:=True
+    construtor.CriarSecao ID:="OPC", Titulo:="ARQUIVOS OPCIONAIS", TipoCabecalho:=ePdrSeparador
+    construtor.CriarSecao ID:="OBRIG", Titulo:="ARQUIVOS OBRIGATÓRIOS", TipoCabecalho:=ePdrSeparador
+    construtor.CriarSecao ID:="SYS", Titulo:="ARQUIVOS DE SISTEMA", TipoCabecalho:=ePdrSeparador
     
     ' 2. Adiciona os Diretórios Padrões dentro das suas respectivas seções
     construtor.AdicionarDiretorioPadrao _
