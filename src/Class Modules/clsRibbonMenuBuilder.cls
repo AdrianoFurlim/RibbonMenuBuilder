@@ -70,9 +70,9 @@ Public Sub AdicionarDiretorioPadrao(SecaoID As String, Titulo As String, VarPQ A
     Dim xml As String
     If Not m_SecoesXML.exists(SecaoID) Then Exit Sub
     
-    xml = "<menu id=""m_dir_" & m_idNum & """ label=""" & Titulo & """ imageMso=""FolderSync"" itemSize=""" & TamanhoSubmenu & """>"
-    xml = xml & "    <button id=""btnSelDir_" & m_idNum & """ label=""Selecionar Pasta Padrão..."" imageMso=""img_Buscar"" onAction=""OnAct_SelecionarPasta"" tag=""" & VarPQ & "|" & DirAtual & """/>"
-    xml = xml & "    <button id=""btnGoDir_" & m_idNum & """ label=""Ir para Pasta Padrão"" imageMso=""img_IrArquivo"" onAction=""OnAct_AbrirPasta"" tag=""" & DirAtual & """/>"
+    xml = "<menu id=""m_dir_" & m_idNum & """ label=""" & Titulo & """ image=""img_pasta"" itemSize=""" & TamanhoSubmenu & """>"
+    xml = xml & "    <button id=""btnSelDir_" & m_idNum & """ label=""Selecionar Pasta Padrão..."" image=""img_procurar"" onAction=""OnAct_SelecionarPasta"" tag=""" & VarPQ & "|" & DirAtual & """/>"
+    xml = xml & "    <button id=""btnGoDir_" & m_idNum & """ label=""Ir para Pasta Padrão"" image=""img_pastaAberta"" onAction=""OnAct_AbrirPasta"" tag=""" & DirAtual & """/>"
     xml = xml & "</menu>"
     
     m_SecoesXML(SecaoID) = m_SecoesXML(SecaoID) & xml
@@ -134,8 +134,8 @@ Public Sub AdicionarArquivoModular(SecaoID As String, Nome As String, NomeBusca 
         xml = "<menu id=""m_arq" & m_idNum & """ label=""" & lblPai & """ imageMso=""" & corPai & """ itemSize=""" & TamanhoSubmenu & """>"
         xml = xml & "    <button id=""hdr_dir" & m_idNum & """ label=""DIRETÓRIO"" enabled=""false""/>"
         xml = xml & "    <button id=""btn_padrao" & m_idNum & """ label=""" & lblUsarPadrao & """ imageMso=""" & iconePadrao & """ onAction=""OnAct_UsarPadrao"" tag=""" & tagToggle & """/>"
-        xml = xml & "    <button id=""btn_sel" & m_idNum & """ label=""Selecionar Nova Pasta..."" imageMso=""img_Buscar"" enabled=""" & btnSelecionarHabilitado & """ onAction=""OnAct_SelecionarPasta"" tag=""" & TagVarEspecifica & "|" & caminho & """/>"
-        xml = xml & "    <button id=""btn_go" & m_idNum & """ label=""Ir para Pasta"" imageMso=""img_IrArquivo"" onAction=""OnAct_AbrirPasta"" tag=""" & tagGo & """/>"
+        xml = xml & "    <button id=""btn_sel" & m_idNum & """ label=""Selecionar Nova Pasta..."" image=""img_procurar"" enabled=""" & btnSelecionarHabilitado & """ onAction=""OnAct_SelecionarPasta"" tag=""" & TagVarEspecifica & "|" & caminho & """/>"
+        xml = xml & "    <button id=""btn_go" & m_idNum & """ label=""Ir para Pasta"" image=""img_pastaAberta"" onAction=""OnAct_AbrirPasta"" tag=""" & tagGo & """/>"
         xml = xml & "</menu>"
     Else
         extReal = LCase(Mid(arquivoMaisRecente, InStrRev(arquivoMaisRecente, ".")))
@@ -170,8 +170,8 @@ Public Sub AdicionarArquivoModular(SecaoID As String, Nome As String, NomeBusca 
         xml = "<menu id=""m_arq" & m_idNum & """ label=""" & lblPai & """ imageMso=""" & corPai & """ itemSize=""" & TamanhoSubmenu & """>"
         xml = xml & "    <button id=""hdr_dir" & m_idNum & """ label=""DIRETÓRIO"" enabled=""false""/>"
         xml = xml & "    <button id=""btn_padrao" & m_idNum & """ label=""" & lblUsarPadrao & """ imageMso=""" & iconePadrao & """ onAction=""OnAct_UsarPadrao"" tag=""" & tagToggle & """/>"
-        xml = xml & "    <button id=""btn_sel" & m_idNum & """ label=""Selecionar Nova Pasta..."" imageMso=""img_Buscar"" enabled=""" & btnSelecionarHabilitado & """ onAction=""OnAct_SelecionarPasta"" tag=""" & TagVarEspecifica & "|" & caminho & """/>"
-        xml = xml & "    <button id=""btn_go" & m_idNum & """ label=""Ir para Pasta"" imageMso=""img_IrArquivo"" onAction=""OnAct_AbrirPasta"" tag=""" & tagGo & """/>"
+        xml = xml & "    <button id=""btn_sel" & m_idNum & """ label=""Selecionar Nova Pasta..."" image=""img_procurar"" enabled=""" & btnSelecionarHabilitado & """ onAction=""OnAct_SelecionarPasta"" tag=""" & TagVarEspecifica & "|" & caminho & """/>"
+        xml = xml & "    <button id=""btn_go" & m_idNum & """ label=""Ir para Pasta"" image=""img_pastaAberta"" onAction=""OnAct_AbrirPasta"" tag=""" & tagGo & """/>"
         xml = xml & "    <menuSeparator id=""sep_int" & m_idNum & """/>"
         xml = xml & "    <button id=""hdr_info" & m_idNum & """ label=""INFORMAÇÕES"" enabled=""false""/>"
         xml = xml & "    <button id=""e_arq" & m_idNum & """ label=""" & textoExt & """ imageMso=""" & corExt & """ onAction=""MacroVazia""/>"
@@ -197,8 +197,8 @@ Public Sub AdicionarArquivoDireto(SecaoID As String, Nome As String, CaminhoComp
     
     xml = "<menu id=""m_arq_dir" & m_idNum & """ label=""" & lblPai & """ imageMso=""" & corPai & """ itemSize=""" & TamanhoSubmenu & """>"
     xml = xml & "    <button id=""hdr_dir_sys" & m_idNum & """ label=""DIRETÓRIO"" enabled=""false""/>"
-    xml = xml & "    <button id=""btn_sel_sys" & m_idNum & """ label=""Selecionar Novo Arquivo..."" imageMso=""img_Buscar"" onAction=""OnAct_SelecionarArquivo"" tag=""" & TagPQ & "|" & CaminhoCompleto & """/>"
-    xml = xml & "    <button id=""btn_go_sys" & m_idNum & """ label=""Ir para Arquivo"" imageMso=""img_IrArquivo"" onAction=""OnAct_AbrirPasta"" tag=""" & CaminhoCompleto & """/>"
+    xml = xml & "    <button id=""btn_sel_sys" & m_idNum & """ label=""Selecionar Novo Arquivo..."" image=""img_procurar"" onAction=""OnAct_SelecionarArquivo"" tag=""" & TagPQ & "|" & CaminhoCompleto & """/>"
+    xml = xml & "    <button id=""btn_go_sys" & m_idNum & """ label=""Ir para Arquivo"" image=""img_pastaAberta"" onAction=""OnAct_AbrirPasta"" tag=""" & CaminhoCompleto & """/>"
     xml = xml & "</menu>"
     
     m_SecoesXML(SecaoID) = m_SecoesXML(SecaoID) & xml

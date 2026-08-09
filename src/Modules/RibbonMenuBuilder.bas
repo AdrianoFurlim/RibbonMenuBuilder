@@ -56,8 +56,7 @@ Public Function GerarMenuArquivos(control As IRibbonControl, ByRef returnedVal)
         SecaoID:="OPC", _
         Titulo:="Diretório Padrão (Opcionais)", _
         VarPQ:="dirPadraoOPC", _
-        DirAtual:=dirPadraoOPC, _
-        TamanhoSubmenu:="normal"
+        DirAtual:=dirPadraoOPC
         
     construtor.AdicionarDiretorioPadrao _
         SecaoID:="OBRIG", _
@@ -102,6 +101,8 @@ Public Function GerarMenuArquivos(control As IRibbonControl, ByRef returnedVal)
     ' 5. Retorna o XML processado para a Ribbon
     returnedVal = construtor.GerarXML()
 End Function
+
+
 
 
 
