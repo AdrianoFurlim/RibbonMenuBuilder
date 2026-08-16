@@ -1,4 +1,5 @@
-# 🚀 RibbonMenuBuilder(docs/imgExemplo1.png)
+# 🚀 RibbonMenuBuilder
+![Visão Geral do Projeto](docs/imgExemplo1.png)
 
 ![VBA](https://img.shields.io/badge/Language-VBA-green)
 ![Excel](https://img.shields.io/badge/Platform-Excel-blue)
@@ -94,7 +95,7 @@ Este projeto está sob a licença [MIT](https://choosealicense.com/licenses/mit/
 
 **MIT License**
 
-Copyright (c) 2026 [Adriano Furtado Lima]
+Copyright (c) 2026 Adriano Furtado Lima
 
 A permissão é concedida, a título gratuito, a qualquer pessoa que obtenha uma cópia deste software e dos arquivos de documentação associados (o "Software"), para lidar com o Software sem restrições, incluindo, sem limitação, os direitos de uso, cópia, modificação, fusão, publicação, distribuição, sublicenciamento e/ou venda de cópias do Software, mediante as seguintes condições:
 
