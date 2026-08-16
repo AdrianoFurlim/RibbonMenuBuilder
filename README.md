@@ -1,4 +1,4 @@
-# 🚀 RibbonMenuBuilder
+# RibbonMenuBuilder
 ![Visão Geral do Projeto](docs/imgExemplo1.png)
 
 ![VBA](https://img.shields.io/badge/Language-VBA-green)
@@ -7,11 +7,11 @@
 
 Um framework VBA Orientado a Objetos (OOP) para o Microsoft Excel, desenvolvido para gerar menus dinâmicos na Ribbon (Faixa de Opções). O projeto foca no gerenciamento visual de arquivos, validação de integridade de bases de dados e integração nativa com variáveis do Power Query, eliminando a necessidade de planilhas de configuração externas.
 
-## 📌 Sobre o Projeto
+## Sobre o Projeto
 
 O **RibbonMenuBuilder** resolve a complexidade de gerenciar múltiplos arquivos de origem (Excel, CSV, XLSB) que alimentam consultas no Power Query. Em vez de menus estáticos, o sistema gera uma interface dinâmica em tempo real (via XML) que informa o status de cada arquivo usando indicadores visuais (Sinalização Verde, Amarelo e Vermelho) baseados em regras de negócio como: extensão correta, existência no diretório e tempo desde a última modificação.
 
-## ⚙️ Principais Funcionalidades
+## Principais Funcionalidades
 
 * **Renderização Dinâmica:** Criação programática de Seções, Diretórios Padrões e Itens de Arquivo.
 * **Validação de Integridade (Motor Windows):** Verifica automaticamente existência, extensão e "idade" do arquivo (baseado em um sistema de Enumeração de Tempo: de 10 minutos a 1 semana).
@@ -19,21 +19,21 @@ O **RibbonMenuBuilder** resolve a complexidade de gerenciar múltiplos arquivos 
 * **Sistema de "Usar Padrão":** Toggle inteligente para alternar entre diretórios específicos e diretórios mestres.
 * **Trava de Segurança:** Método `.ValidarArquivos()` nativo para bloquear execuções críticas caso bases estejam faltantes ou obsoletas.
 
-## 🏗️ Arquitetura
+## Arquitetura
 
 O sistema utiliza o padrão de projeto *Builder*, encapsulando a complexidade em uma classe mestra (`clsRibbonMenuBuilder`):
 1. **Casca (XML):** Gatilhos dinâmicos via `invalidateContentOnDrop`.
 2. **Cérebro (Classe):** Lógica de estado, IO do Windows, geração de XML e motor RegEx.
 3. **Ponte (Callbacks):** Módulos padrão que roteiam as ações da interface para a classe.
 
-## 🛠️ Pré-requisitos
+## Pré-requisitos
 
 * Microsoft Excel com macros habilitadas (`.xlsm` ou `.xlsb`).
 * Referências habilitadas no VBA:
     * `Microsoft Office 16.0 Object Library` (ou versão instalada).
     * `Microsoft Scripting Runtime`.
 
-## 🚀 Como Usar
+## Como Usar
 
 ### 1. Desenhando o Menu (VBA)
 
@@ -80,7 +80,7 @@ Sub AtualizarBases()
 End Sub
 ~~~
 
-## 📚 Referência da API
+## Referência da API
 
 | Método | Descrição | Parâmetros |
 | :--- | :--- | :--- |
@@ -89,13 +89,13 @@ End Sub
 | `GerarXML` | Compila o XML final para a Ribbon | - |
 | `ValidarArquivos` | Valida integridade e alerta o usuário | - |
 
-## 📄 Licença
+## Licença
 
 Este projeto está sob a licença [MIT](https://choosealicense.com/licenses/mit/). 
 
 **MIT License**
 
-Copyright (c) 2026 Adriano Furtado Lima
+Copyright (c) 2026 [Adriano Furtado Lima]
 
 A permissão é concedida, a título gratuito, a qualquer pessoa que obtenha uma cópia deste software e dos arquivos de documentação associados (o "Software"), para lidar com o Software sem restrições, incluindo, sem limitação, os direitos de uso, cópia, modificação, fusão, publicação, distribuição, sublicenciamento e/ou venda de cópias do Software, mediante as seguintes condições:
 
