@@ -3,7 +3,7 @@ Option Explicit
 ' =====================================================================
 ' ENUMERAÇÕES
 ' =====================================================================
-' ADICIONADO: Enumeração para o controle de tempo do arquivo (antigoEm)
+' Enumeração para o controle de tempo do arquivo (antigoEm)
 Public Enum eValidade
     vLivre = 0
     v10Min = 1
@@ -14,7 +14,7 @@ Public Enum eValidade
     v1Semana = 6
 End Enum
 
-' ADICIONADO: Enumeração para o tipo de cabeçalho da seção
+' Enumeração para o tipo de cabeçalho da seção
 Public Enum eTipoCabecalho
     eBtnSeparador = 0   ' Linha vazia + Botão Inativo (Padrão)
     ePdrSeparador = 1   ' Linha com o título embutido no próprio separador

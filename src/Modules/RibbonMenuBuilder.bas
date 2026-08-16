@@ -4,33 +4,58 @@ Option Explicit
 ' CALLBACKS DA RIBBON (Ponte de comunicação com a Classe)
 ' =====================================================================
 
-' Alterna entre usar o Padrão ou não
+' ==========================================================================
+' Rotina:      OnAct_UsarPadrao
+' Descrição:   Alterna entre usar o Padrão ou não, repassando a ação para 
+'              o motor da classe.
+' Parâmetros:  control (IRibbonControl) - Controle da Ribbon que disparou a ação.
+' ==========================================================================
 Public Sub OnAct_UsarPadrao(control As IRibbonControl)
     Dim menu As New clsRibbonMenuBuilder
+    ' Aciona a lógica de toggle (ativar/desativar) utilizando os dados da Tag do botão
     menu.ExecutarTogglePadrao control.Tag
 End Sub
 
-' Abre o Seletor de Pastas
+' ==========================================================================
+' Rotina:      OnAct_SelecionarPasta
+' Descrição:   Abre o Seletor de Pastas nativo do Windows.
+' Parâmetros:  control (IRibbonControl) - Controle da Ribbon que disparou a ação.
+' ==========================================================================
 Public Sub OnAct_SelecionarPasta(control As IRibbonControl)
     Dim menu As New clsRibbonMenuBuilder
+    ' Redireciona a chamada para o seletor de pastas da classe, passando as variáveis contidas na Tag
     menu.ExecutarSelecionarPasta control.Tag
 End Sub
 
-' Abre o Seletor de Arquivos (Para os de Sistema)
+' ==========================================================================
+' Rotina:      OnAct_SelecionarArquivo
+' Descrição:   Abre o Seletor de Arquivos (Para os de Sistema).
+' Parâmetros:  control (IRibbonControl) - Controle da Ribbon que disparou a ação.
+' ==========================================================================
 Public Sub OnAct_SelecionarArquivo(control As IRibbonControl)
     Dim menu As New clsRibbonMenuBuilder
+    ' Redireciona a chamada para o seletor de arquivos da classe
     menu.ExecutarSelecionarArquivo control.Tag
 End Sub
 
-' Abre a pasta física no Windows (destacando o arquivo se existir)
+' ==========================================================================
+' Rotina:      OnAct_AbrirPasta
+' Descrição:   Abre a pasta física no Windows (destacando o arquivo se existir).
+' Parâmetros:  control (IRibbonControl) - Controle da Ribbon que disparou a ação.
+' ==========================================================================
 Public Sub OnAct_AbrirPasta(control As IRibbonControl)
     Dim menu As New clsRibbonMenuBuilder
+    ' Utiliza a API do Windows Explorer mapeada na classe para focar no diretório
     menu.ExecutarAbrirCaminho control.Tag
 End Sub
 
-' Função amortecedora para botões sem ação (ex: ícone de Data e Extensão)
+' ==========================================================================
+' Rotina:      MacroVazia
+' Descrição:   Função amortecedora para botões sem ação (ex: ícone de Data e Extensão).
+' Parâmetros:  control (IRibbonControl) - Controle da Ribbon que disparou a ação.
+' ==========================================================================
 Public Sub MacroVazia(control As IRibbonControl)
-    ' Faz nada
+    ' Faz nada - Apenas consome o evento de clique sem realizar nenhuma ação
 End Sub
 
 
@@ -102,7 +127,13 @@ End Sub
     ' returnedVal = construtor.GerarXML()
 ' End Function
 
-
+' ==========================================================================
+' Função:      GerarMenuArquivos
+' Descrição:   Callback primário invocado quando o Excel carrega a Ribbon.
+'              Responsável por renderizar a interface baseada em XML.
+' Parâmetros:  control (IRibbonControl) - Controle de contexto da UI.
+'              returnedVal (String) - Parâmetro por referência que recebe o XML.
+' ==========================================================================
 Public Function GerarMenuArquivos(control As IRibbonControl, ByRef returnedVal)
     Dim menu As clsRibbonMenuBuilder
     Set menu = ConfigurarMenuArquivos() ' Puxa a classe já carregada
@@ -110,7 +141,12 @@ Public Function GerarMenuArquivos(control As IRibbonControl, ByRef returnedVal)
     returnedVal = menu.GerarXML()       ' Cospe o XML para a tela
 End Function
 
-
+' ==========================================================================
+' Função:      ConfigurarMenuArquivos
+' Descrição:   Orquestra a configuração e construção da estrutura de dados do 
+'              menu, mapeando seções, diretórios e arquivos.
+' Retorno:     clsRibbonMenuBuilder - Objeto configurado pronto para uso.
+' ==========================================================================
 Public Function ConfigurarMenuArquivos() As clsRibbonMenuBuilder
     ' 0. Garante que as variáveis e arquivos existem antes de desenhar o menu
     If dirPadraoOBRIG = "" Then Call CriarAmbienteDeTeste
@@ -177,21 +213,19 @@ Public Function ConfigurarMenuArquivos() As clsRibbonMenuBuilder
     Set ConfigurarMenuArquivos = construtor
 End Function
 
-
+' ==========================================================================
+' Rotina:      TesteValidacao
+' Descrição:   Verifica se há pendências nos arquivos mapeados antes de
+'              prosseguir com atualizações em lote (ex: Refresh do PQ).
+' ==========================================================================
 Sub TesteValidacao() '(Optional ByRef V As Boolean)
     Dim menu As clsRibbonMenuBuilder
     Set menu = ConfigurarMenuArquivos() ' Puxa a MESMA classe já carregada
     
     ' Chama a validação nativa da classe
     If Not menu.ValidarArquivos() Then
-        Exit Sub ' Aborta se o usuário clicou em NÃO
+        Exit Sub ' Aborta se o usuário clicou em NÃO perante aos erros
     End If
     
     ' ... continua com a sua rotina de AtualizarTudo (cronômetro, RefreshAll, etc) ...
 End Sub
-
-
-
-
-
-
