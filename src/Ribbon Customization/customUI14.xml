@@ -1,15 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<customUI xmlns="http://schemas.microsoft.com/office/2009/07/customui">
-<ribbon startFromScratch="true">
+<!-- 
+==========================================================================
+Arquivo:       CustomUI.xml
+Descrição:     Estrutura de interface customizada (Ribbon) para o Excel.
+               Define a criação de uma nova aba exclusiva para testes e 
+               um menu dinâmico cujos itens são renderizados via VBA.
+========================================================================== 
+-->
+<customUI xmlns="http://schemas.microsoft.com/office/2009/07/customui" >
+<!-- O atributo startFromScratch="true" oculta as abas nativas do Office para focar exclusivamente nesta interface -->
+<ribbon startFromScratch="true" >
     <tabs>
       
-      <!-- ABA DE TESTE -->
+      <!-- ================= ABA PRINCIPAL ================= -->
+      <!-- Define a aba superior onde os grupos de ferramentas serão alocados -->
       <tab id="tabTeste" label="Guia de Testes">
         
-        <!-- GRUPO -->
+        <!-- ================= GRUPO DE FERRAMENTAS ================= -->
+        <!-- Agrupador visual para segmentar funcionalidades relacionadas ao gerenciamento -->
         <group id="grpArquivos" label="Gerenciamento">
           
-          <!-- O SEU MENU DINÂMICO -->
+          <!-- ================= MENU DINÂMICO ================= -->
+          <!-- O controle 'dynamicMenu' delega a construção de seus subitens para o VBA no momento da execução.
+               O atributo 'getContent' aponta para o callback que injetará o XML dos botões internos. -->
           <dynamicMenu id="tbVerificarArq" 
                        label="Verificar Arquivos" 
                        image="img_checkList"
