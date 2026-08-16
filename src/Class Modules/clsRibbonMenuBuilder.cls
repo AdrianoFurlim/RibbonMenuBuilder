@@ -42,7 +42,14 @@ Public TamanhoMenuPrincipal As String
 ' =====================================================================
 ' INICIALIZAÇÃO
 ' =====================================================================
+' ==========================================================================
+' Rotina:      Class_Initialize
+' Descrição:   Construtor da classe. Inicializa as variáveis de estado, 
+'              ícones padrão e os objetos de coleção para o controle do XML.
+' Parâmetros:  Nenhum
+' ==========================================================================
 Private Sub Class_Initialize()
+    ' Definição dos ícones nativos do Office (imageMso) para status visual
     m_IconeOk = "NotebookColor12"
     m_IconeAtencao = "NotebookColor2"
     m_IconeErro = "NotebookColor7"
@@ -51,11 +58,13 @@ Private Sub Class_Initialize()
     
     TamanhoMenuPrincipal = "large" ' Tamanho padrão inicial
     
+    ' Inicializa as coleções que armazenarão a estrutura do menu em memória
     Set m_SecoesOrdem = New Collection
     Set m_SecoesXML = CreateObject("Scripting.Dictionary")
     m_idNum = 1
 End Sub
 
+' Propriedades (Getters/Setters) para customização externa dos ícones
 Public Property Let IconeOk(valor As String): m_IconeOk = valor: End Property
 Public Property Let IconeAtencao(valor As String): m_IconeAtencao = valor: End Property
 Public Property Let IconeErro(valor As String): m_IconeErro = valor: End Property
@@ -65,6 +74,13 @@ Public Property Let IconeCinza(valor As String): m_IconeCinza = valor: End Prope
 ' BLOCO 1: GERADORES DE XML (O Desenho do Menu)
 ' =====================================================================
 
+' ==========================================================================
+' Rotina:      CriarSecao
+' Descrição:   Cria um novo agrupamento (seção) no menu CustomUI.
+' Parâmetros:  ID (String) - Identificador único da seção.
+'              Titulo (String) - Texto exibido no cabeçalho.
+'              TipoCabecalho (eTipoCabecalho) - Estilo visual do separador.
+' ==========================================================================
 Public Sub CriarSecao(ID As String, Titulo As String, Optional TipoCabecalho As eTipoCabecalho = ePdrSeparador)
     Dim xmlCabecalho As String
     
@@ -81,25 +97,45 @@ Public Sub CriarSecao(ID As String, Titulo As String, Optional TipoCabecalho As 
         xmlCabecalho = xmlCabecalho & "<button id=""hdr_" & ID & """ label=""" & Titulo & """ enabled=""false""/>"
     End If
     
-    ' Registra a seção
+    ' Registra a seção mantendo a ordem de inserção e armazenando o XML inicial
     m_SecoesOrdem.Add ID
     m_SecoesXML.Add ID, xmlCabecalho
 End Sub
 
+' ==========================================================================
+' Rotina:      AdicionarDiretorioPadrao
+' Descrição:   Cria botões genéricos para seleção e navegação de diretórios.
+' Parâmetros:  SecaoID (String) - ID da seção pai.
+'              Titulo (String) - Nome exibido no menu.
+'              VarPQ (String) - Nome da variável no Power Query.
+'              DirAtual (String) - Caminho atual configurado.
+'              TamanhoSubmenu (String) - Define se o item é normal ou largo.
+' ==========================================================================
 ' ADICIONADO: Método flexível para criar N diretórios padrões dentro de qualquer seção
 Public Sub AdicionarDiretorioPadrao(SecaoID As String, Titulo As String, VarPQ As String, DirAtual As String, Optional TamanhoSubmenu As String = "normal")
     Dim xml As String
+    ' Verifica a integridade garantindo que a seção pai existe
     If Not m_SecoesXML.exists(SecaoID) Then Exit Sub
     
+    ' Constrói a estrutura XML do subset de diretório
     xml = "<menu id=""m_dir_" & m_idNum & """ label=""" & Titulo & """ image=""img_pasta"" itemSize=""" & TamanhoSubmenu & """>"
     xml = xml & "    <button id=""btnSelDir_" & m_idNum & """ label=""Selecionar Pasta Padrão..."" image=""img_procurar"" onAction=""OnAct_SelecionarPasta"" tag=""" & VarPQ & "|" & DirAtual & """/>"
     xml = xml & "    <button id=""btnGoDir_" & m_idNum & """ label=""Ir para Pasta Padrão"" image=""img_pastaAberta"" onAction=""OnAct_AbrirPasta"" tag=""" & DirAtual & """/>"
     xml = xml & "</menu>"
     
+    ' Concatena o novo XML na seção correspondente e incrementa o ID global
     m_SecoesXML(SecaoID) = m_SecoesXML(SecaoID) & xml
     m_idNum = m_idNum + 1
 End Sub
 
+' ==========================================================================
+' Rotina:      AdicionarArquivoModular
+' Descrição:   Verifica a existência, extensão e validade temporal de um 
+'              arquivo específico, gerando o XML correspondente com alertas 
+'              visuais caso haja inconsistências.
+' Parâmetros:  SecaoID, Nome, NomeBusca, Extensao, DiretorioAlvo, TagVarEspecifica,
+'              TagVarPadrao, ValorPadrao, AntigoEm, TamanhoSubmenu, TipoCabecalhoSubmenu.
+' ==========================================================================
 ' MODIFICADO: Assinatura atualizada (Prefixo -> NomeBusca, removido Obrigatorio, inserido AntigoEm e a lógica de Tags duplas)
 Public Sub AdicionarArquivoModular(SecaoID As String, Nome As String, NomeBusca As String, Extensao As String, DiretorioAlvo As String, TagVarEspecifica As String, TagVarPadrao As String, ValorPadrao As String, Optional AntigoEm As eValidade = vLivre, Optional TamanhoSubmenu As String = "normal", Optional TipoCabecalhoSubmenu As eTipoCabecalho = ePdrSeparador)
     Dim arquivoAtual As String, arquivoMaisRecente As String
@@ -114,6 +150,7 @@ Public Sub AdicionarArquivoModular(SecaoID As String, Nome As String, NomeBusca 
     Dim isUsandoPadrao As Boolean
     isUsandoPadrao = (Trim(DiretorioAlvo) = Trim(ValorPadrao))
     
+    ' Define os estados visuais do botão Toggle baseando-se na correspondência com o padrão
     If isUsandoPadrao Then
         lblUsarPadrao = "Usar Padrão (Ativado)"
         iconePadrao = m_IconeOk
@@ -124,14 +161,17 @@ Public Sub AdicionarArquivoModular(SecaoID As String, Nome As String, NomeBusca 
         btnSelecionarHabilitado = "true"
     End If
     
+    ' Garante que o caminho do diretório termina com a barra invertida apropriada
     caminho = Trim(DiretorioAlvo)
     If caminho <> "" And Right(caminho, 1) <> "\" Then caminho = caminho & "\"
     arquivoMaisRecente = ""
     dataModificacao = 0
     
+    ' Varre o diretório em busca do arquivo mais recente que corresponda ao padrão de busca
     If caminho <> "" And Dir(caminho, vbDirectory) <> "" Then
         arquivoAtual = Dir(caminho & NomeBusca & "*.*")
         Do While arquivoAtual <> ""
+            ' Ignora arquivos temporários do sistema (iniciados com ~$)
             If Left(arquivoAtual, 2) <> "~$" Then
                 dataAtual = FileDateTime(caminho & arquivoAtual)
                 If dataAtual > dataModificacao Then
@@ -147,11 +187,13 @@ Public Sub AdicionarArquivoModular(SecaoID As String, Nome As String, NomeBusca 
     Dim tagToggle As String
     tagToggle = TagVarEspecifica & "|" & TagVarPadrao
     
+    ' Fluxo Alternativo: O arquivo não foi encontrado no diretório mapeado
     If arquivoMaisRecente = "" Then
         lblPai = Nome & " (Não Encontrado)"
         corPai = m_IconeErro
         tagGo = caminho
         
+        ' Acumula a falha na string de validação global
         m_MensagemValidacao = m_MensagemValidacao & "> " & Nome & vbCrLf & "     • Não encontrado" & vbCrLf & vbCrLf
         
         xml = "<menu id=""m_arq" & m_idNum & """ label=""" & lblPai & """ imageMso=""" & corPai & """ itemSize=""" & TamanhoSubmenu & """>"
@@ -163,15 +205,18 @@ Public Sub AdicionarArquivoModular(SecaoID As String, Nome As String, NomeBusca 
             xml = xml & "    <button id=""hdr_dir" & m_idNum & """ label=""DIRETÓRIO"" enabled=""false""/>"
         End If
         
+        ' Montagem dos controles para situação de arquivo não encontrado
         xml = xml & "    <button id=""btn_padrao" & m_idNum & """ label=""" & lblUsarPadrao & """ imageMso=""" & iconePadrao & """ onAction=""OnAct_UsarPadrao"" tag=""" & tagToggle & """/>"
         xml = xml & "    <button id=""btn_sel" & m_idNum & """ label=""Selecionar Nova Pasta..."" image=""img_procurar"" enabled=""" & btnSelecionarHabilitado & """ onAction=""OnAct_SelecionarPasta"" tag=""" & TagVarEspecifica & "|" & caminho & """/>"
         xml = xml & "    <button id=""btn_go" & m_idNum & """ label=""Ir para Pasta"" image=""img_pastaAberta"" onAction=""OnAct_AbrirPasta"" tag=""" & tagGo & """/>"
         xml = xml & "</menu>"
     Else
+        ' Fluxo Principal: O arquivo foi encontrado, realiza as validações de regra de negócio
         extReal = LCase(Mid(arquivoMaisRecente, InStrRev(arquivoMaisRecente, ".")))
         lblPai = Nome
         tagGo = caminho & arquivoMaisRecente
         
+        ' Validação Temporal: Verifica se o arquivo está obsoleto conforme o Enum configurado
         Dim isAntigo As Boolean
         isAntigo = False
         If AntigoEm <> vLivre Then
@@ -187,6 +232,7 @@ Public Sub AdicionarArquivoModular(SecaoID As String, Nome As String, NomeBusca 
             End Select
         End If
         
+        ' Define dinamicamente as cores de feedback baseadas nas validações
         Dim corExt As String, textoExt As String, corData As String, textoData As String
         corExt = IIf(extReal = LCase(Extensao), m_IconeOk, m_IconeErro)
         textoExt = "Extensão: " & extReal & IIf(extReal = LCase(Extensao), "", " (Incorreta)")
@@ -194,8 +240,10 @@ Public Sub AdicionarArquivoModular(SecaoID As String, Nome As String, NomeBusca 
         corData = IIf(isAntigo, m_IconeAtencao, m_IconeOk)
         textoData = "Data: " & Format(dataModificacao, "dd/mm/yyyy hh:mm") & IIf(isAntigo, " (Antigo)", "")
         
+        ' Consolida o status do botão pai (se há erro ou aviso nas validações)
         corPai = IIf(corExt = m_IconeErro Or corData = m_IconeAtencao, m_IconeAtencao, m_IconeOk)
         
+        ' Registra inconsistências para o prompt de validação final
         If extReal <> LCase(Extensao) Then
             m_MensagemValidacao = m_MensagemValidacao & "> " & Nome & vbCrLf & "     • Extensão incorreta (" & extReal & ")" & vbCrLf & vbCrLf
         ElseIf isAntigo Then
@@ -223,6 +271,7 @@ Public Sub AdicionarArquivoModular(SecaoID As String, Nome As String, NomeBusca 
             xml = xml & "    <button id=""hdr_info" & m_idNum & """ label=""INFORMAÇÕES"" enabled=""false""/>"
         End If
         
+        ' Inclusão de botões informativos (sem ação) exibindo os dados de validação
         xml = xml & "    <button id=""e_arq" & m_idNum & """ label=""" & textoExt & """ imageMso=""" & corExt & """ onAction=""MacroVazia""/>"
         xml = xml & "    <button id=""d_arq" & m_idNum & """ label=""" & textoData & """ imageMso=""" & corData & """ onAction=""MacroVazia""/>"
         xml = xml & "</menu>"
@@ -232,10 +281,17 @@ Public Sub AdicionarArquivoModular(SecaoID As String, Nome As String, NomeBusca 
     m_idNum = m_idNum + 1
 End Sub
 
+' ==========================================================================
+' Rotina:      AdicionarArquivoDireto
+' Descrição:   Cria a interface para um arquivo específico apontado diretamente 
+'              pelo usuário (sem busca em diretório).
+' Parâmetros:  SecaoID, Nome, CaminhoCompleto, TagPQ, TamanhoSubmenu, TipoCabecalhoSubmenu
+' ==========================================================================
 Public Sub AdicionarArquivoDireto(SecaoID As String, Nome As String, CaminhoCompleto As String, TagPQ As String, Optional TamanhoSubmenu As String = "normal", Optional TipoCabecalhoSubmenu As eTipoCabecalho = ePdrSeparador)
     Dim xml As String, corPai As String, lblPai As String
     If Not m_SecoesXML.exists(SecaoID) Then Exit Sub
     
+    ' Valida o acesso direto ao arquivo no sistema operacional
     If Trim(CaminhoCompleto) = "" Or Dir(CaminhoCompleto) = "" Then
         lblPai = Nome & " (Não Encontrado)"
         corPai = m_IconeErro
@@ -262,10 +318,17 @@ Public Sub AdicionarArquivoDireto(SecaoID As String, Nome As String, CaminhoComp
     m_idNum = m_idNum + 1
 End Sub
 
+' ==========================================================================
+' Função:      GerarXML
+' Descrição:   Varre todas as seções mapeadas e constrói a string XML final
+'              que será injetada no CustomUI do Ribbon.
+' Retorno:     String com a formatação XML completa.
+' ==========================================================================
 Public Function GerarXML() As String
     Dim xmlFinal As String, chaveSecao As Variant
     xmlFinal = "<menu xmlns=""http://schemas.microsoft.com/office/2009/07/customui"" itemSize=""" & TamanhoMenuPrincipal & """>"
     
+    ' Respeita a ordem de criação das seções ao agrupar os nós XML
     For Each chaveSecao In m_SecoesOrdem
         If InStr(1, m_SecoesXML(chaveSecao), "<menu ") > 0 Then xmlFinal = xmlFinal & m_SecoesXML(chaveSecao)
     Next chaveSecao
@@ -276,6 +339,13 @@ End Function
 ' =====================================================================
 ' BLOCO 2: MOTOR DE AÇÕES (Lógica de Cliques e Windows)
 ' =====================================================================
+
+' ==========================================================================
+' Rotina:      ExecutarTogglePadrao
+' Descrição:   Ativa ou desativa o uso de um diretório padrão, atualizando 
+'              a variável no Power Query.
+' Parâmetros:  Tag (String) - Variáveis separadas por pipe ('|')
+' ==========================================================================
 Public Sub ExecutarTogglePadrao(Tag As String)
     Dim partes() As String, varEspecifica As String, varPadrao As String
     Dim valEspecifico As String, valPadrao As String
@@ -299,6 +369,12 @@ Public Sub ExecutarTogglePadrao(Tag As String)
     End If
 End Sub
 
+' ==========================================================================
+' Rotina:      ExecutarSelecionarPasta
+' Descrição:   Abre o FileDialog nativo para seleção de pastas e salva
+'              o caminho escolhido no repositório Power Query.
+' Parâmetros:  Tag (String) - NomeDaVariavel|CaminhoInicial
+' ==========================================================================
 Public Sub ExecutarSelecionarPasta(Tag As String)
     Dim fd As FileDialog
     Dim partesTag() As String, nomeVariavel As String, caminhoInicial As String, novaPasta As String
@@ -314,12 +390,18 @@ Public Sub ExecutarSelecionarPasta(Tag As String)
         If caminhoInicial <> "" And Dir(caminhoInicial, vbDirectory) <> "" Then .InitialFileName = caminhoInicial
         If .Show = -1 Then
             novaPasta = .SelectedItems(1)
+            ' Assegura que o caminho registrado finalize em barra para operações posteriores de concatenação
             If Right(novaPasta, 1) <> "\" Then novaPasta = novaPasta & "\"
             SalvarVariavelPQ_Interno NOME_CONSULTA_PQ, nomeVariavel, novaPasta
         End If
     End With
 End Sub
 
+' ==========================================================================
+' Rotina:      ExecutarSelecionarArquivo
+' Descrição:   Abre o FileDialog nativo para seleção de arquivos.
+' Parâmetros:  Tag (String) - NomeDaVariavel|CaminhoInicial
+' ==========================================================================
 Public Sub ExecutarSelecionarArquivo(Tag As String)
     Dim fd As FileDialog
     Dim partesTag() As String, nomeVariavel As String, caminhoInicial As String, pastaInicial As String, novoArquivo As String
@@ -333,6 +415,7 @@ Public Sub ExecutarSelecionarArquivo(Tag As String)
     With fd
         .Title = "Selecione o arquivo para: " & nomeVariavel
         If caminhoInicial <> "" Then
+            ' Isola o diretório pai do caminho do arquivo para focar o FileDialog
             pastaInicial = Left(caminhoInicial, InStrRev(caminhoInicial, "\"))
             If Dir(pastaInicial, vbDirectory) <> "" Then .InitialFileName = pastaInicial
         End If
@@ -343,17 +426,26 @@ Public Sub ExecutarSelecionarArquivo(Tag As String)
     End With
 End Sub
 
+' ==========================================================================
+' Rotina:      ExecutarAbrirCaminho
+' Descrição:   Integra com o Windows Explorer para focar em pastas ou
+'              destacar arquivos específicos.
+' Parâmetros:  Tag (String) - Caminho a ser explorado
+' ==========================================================================
 Public Sub ExecutarAbrirCaminho(Tag As String)
     Dim pastaRaiz As String
     If Tag = "" Then Exit Sub
     On Error Resume Next
+    ' Verifica se a string remete a um recurso existente
     If Dir(Tag, vbDirectory) <> "" Then
+        ' Avalia os atributos para decidir se abre a pasta ou foca no arquivo
         If (GetAttr(Tag) And vbDirectory) = vbDirectory Then
             Shell "explorer.exe """ & Tag & """", vbNormalFocus
         Else
             Shell "explorer.exe /select,""" & Tag & """", vbNormalFocus
         End If
     Else
+        ' Fallback de navegação: se falhou, tenta abrir o diretório pai
         pastaRaiz = Left(Tag, InStrRev(Tag, "\"))
         If Dir(pastaRaiz, vbDirectory) <> "" Then Shell "explorer.exe """ & pastaRaiz & """", vbNormalFocus
     End If
@@ -363,6 +455,13 @@ End Sub
 ' =====================================================================
 ' BLOCO 3: CRUD POWER QUERY (O "Banco de Dados" Embutido e Privado)
 ' =====================================================================
+
+' ==========================================================================
+' Rotina:      SalvarVariavelPQ_Interno
+' Descrição:   Camada abstrata que decide se cria ou atualiza uma variável
+'              dentro do código M de uma consulta Power Query.
+' Parâmetros:  nomeConsulta, nomeVariavel, valor
+' ==========================================================================
 Private Sub SalvarVariavelPQ_Interno(nomeConsulta As String, nomeVariavel As String, valor As String)
     Dim formulaM As String, regex As Object, valorFormatado As String
     
@@ -385,6 +484,12 @@ Private Sub SalvarVariavelPQ_Interno(nomeConsulta As String, nomeVariavel As Str
     End If
 End Sub
 
+' ==========================================================================
+' Função:      LerVariavelPQ_Interno
+' Descrição:   Extrai o valor de uma variável específica via Regex dentro
+'              do corpo da consulta M.
+' Retorno:     Valor em string limpa (sem aspas do código M).
+' ==========================================================================
 Private Function LerVariavelPQ_Interno(nomeConsulta As String, nomeVariavel As String) As String
     Dim formulaM As String, regex As Object, matches As Object
     LerVariavelPQ_Interno = ""
@@ -392,24 +497,38 @@ Private Function LerVariavelPQ_Interno(nomeConsulta As String, nomeVariavel As S
     formulaM = ActiveWorkbook.Queries(nomeConsulta).Formula
     On Error GoTo 0
     If formulaM = "" Then Exit Function
+    
+    ' Padrão de captura do valor mapeado à direita do sinal de igual, ignorando quebras de linha
     Set regex = CreateObject("VBScript.RegExp")
     regex.Pattern = "\b" & nomeVariavel & "\s*=\s*([^,\r\n]+)"
     regex.IgnoreCase = True
     Set matches = regex.Execute(formulaM)
+    
     If matches.Count > 0 Then
         LerVariavelPQ_Interno = Trim(matches(0).SubMatches(0))
+        ' Remove a formatação textual estrita embutida pela linguagem M ("")
         If Left(LerVariavelPQ_Interno, 1) = """" Then LerVariavelPQ_Interno = Mid(LerVariavelPQ_Interno, 2, Len(LerVariavelPQ_Interno) - 2)
     End If
 End Function
 
+' ==========================================================================
+' Rotina:      PrepararConsultaRepositorio
+' Descrição:   Garante que a Query base do "banco de dados" exista no arquivo.
+' ==========================================================================
 Private Sub PrepararConsultaRepositorio(nomeConsulta As String)
     Dim qry As WorkbookQuery
     On Error Resume Next
     Set qry = ActiveWorkbook.Queries(nomeConsulta)
     On Error GoTo 0
+    ' Se a query falhar no objeto ou não for encontrada, instanciamos a estrutura base da linguagem M
     If qry Is Nothing Then ActiveWorkbook.Queries.Add Name:=nomeConsulta, Formula:="let" & vbCrLf & "    CriadoEm = """ & Now & """" & vbCrLf & "in" & vbCrLf & "    CriadoEm"
 End Sub
 
+' ==========================================================================
+' Rotina:      AdicionarVariavelPQ_Interno
+' Descrição:   Injeta uma nova linha de variável logo abaixo do bloco "let"
+'              utilizando substituição por expressão regular.
+' ==========================================================================
 Private Sub AdicionarVariavelPQ_Interno(nomeConsulta As String, nomeVariavel As String, valor As String)
     Dim formulaM As String, regex As Object
     formulaM = ActiveWorkbook.Queries(nomeConsulta).Formula
@@ -422,10 +541,16 @@ Private Sub AdicionarVariavelPQ_Interno(nomeConsulta As String, nomeVariavel As 
     End If
 End Sub
 
+' ==========================================================================
+' Rotina:      AlterarVariavelPQ_Interno
+' Descrição:   Substitui de forma cirúrgica apenas o valor de uma variável 
+'              existente no código M da consulta.
+' ==========================================================================
 Private Sub AlterarVariavelPQ_Interno(nomeConsulta As String, nomeVariavel As String, novoValor As String)
     Dim formulaM As String, regex As Object
     formulaM = ActiveWorkbook.Queries(nomeConsulta).Formula
     Set regex = CreateObject("VBScript.RegExp")
+    ' Captura a chave em um grupo e o valor em outro para realizar o replace seguro
     regex.Pattern = "(\b" & nomeVariavel & "\s*=\s*)([^,\r\n]+)"
     regex.IgnoreCase = True
     If regex.Test(formulaM) Then
@@ -437,6 +562,13 @@ End Sub
 ' =====================================================================
 ' BLOCO 4: VALIDAÇÃO DE INTEGRIDADE (Trava Flexível)
 ' =====================================================================
+
+' ==========================================================================
+' Função:      ValidarArquivos
+' Descrição:   Processa e emite o alerta consolidado caso arquivos da estrutura
+'              estejam ausentes ou com extensões/datas divergentes.
+' Retorno:     Booleano, True se o fluxo deve prosseguir, False se abortado.
+' ==========================================================================
 Public Function ValidarArquivos() As Boolean
     ' Se a string não estiver vazia, significa que erros foram acumulados durante a criação
     If m_MensagemValidacao <> "" Then
@@ -455,7 +587,3 @@ Public Function ValidarArquivos() As Boolean
     ' Se tudo estiver OK, ou se o usuário escolheu "SIM"
     ValidarArquivos = True
 End Function
-
-
-
-
